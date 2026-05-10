@@ -14,13 +14,22 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GoogleIcon, GitHubIcon } from "@/components/icons";
+import { loginWithGoogle, loginWithGitHub } from "@/app/actions/auth";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleGoogleLogin = async () => {
+    await loginWithGoogle();
+  };
+
+  const handleGitHubLogin = async () => {
+    await loginWithGitHub();
+  };
+
+  const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login redirect
+    // For now, let's keep mock for email or implement credentials later
     router.push("/dashboard");
   };
 
@@ -40,11 +49,11 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="w-full" type="button" onClick={handleLogin}>
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
               <GoogleIcon className="mr-2 h-4 w-4" />
               Google
             </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleLogin}>
+            <Button variant="outline" className="w-full" type="button" onClick={handleGitHubLogin}>
               <GitHubIcon className="mr-2 h-4 w-4" />
               GitHub
             </Button>
@@ -78,7 +87,7 @@ export default function LoginPage() {
           <Button 
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" 
             type="submit"
-            onClick={handleLogin}
+            onClick={handleEmailLogin}
           >
             Sign In
           </Button>

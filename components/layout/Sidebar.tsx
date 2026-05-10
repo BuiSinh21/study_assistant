@@ -11,6 +11,9 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { logout } from "@/app/actions/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const routes = [
   {
@@ -41,6 +44,11 @@ const routes = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <div className="space-y-4 py-4 flex flex-col h-full bg-background border-r">
@@ -69,16 +77,30 @@ export function Sidebar() {
           ))}
         </div>
       </div>
-      <div className="px-3 py-2">
-        <Link
-          href="/"
+      <div className="px-3 py-2 border-t space-y-2">
+        {session?.user && (
+          <div className="flex items-center px-3 py-4 mb-2 gap-3">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={session.user.image || ""} />
+              <AvatarFallback className="bg-indigo-100 text-indigo-600">
+                {session.user.name?.[0] || session.user.email?.[0] || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-sm font-medium truncate">{session.user.name}</span>
+              <span className="text-xs text-muted-foreground truncate">{session.user.email}</span>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={handleLogout}
           className="text-sm group flex p-3 w-full justify-start font-medium cursor-pointer text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition"
         >
           <div className="flex items-center flex-1">
             <LogOut className="h-5 w-5 mr-3" />
             Logout
           </div>
-        </Link>
+        </button>
       </div>
     </div>
   );
