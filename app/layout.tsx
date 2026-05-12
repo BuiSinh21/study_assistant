@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Nunito, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/providers/session-provider";
+import QueryProvider from "@/components/providers/query-provider";
 import "./globals.css";
 
 const fontSans = Nunito({
@@ -38,7 +39,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
+            <QueryProvider>
+              {children}
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

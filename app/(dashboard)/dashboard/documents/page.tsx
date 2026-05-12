@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Table,
@@ -31,46 +32,40 @@ import { Files, MoreHorizontal, UploadCloud, Search, Trash2, FileText, Loader2 }
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-
-interface Document {
-  id: string;
-  title: string;
-  fileType: string | null;
-  fileSize: string | null;
-  createdAt: string;
-}
+import { Document } from "@/types";
+import { useRouter } from "next/navigation";
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch documents
-  const fetchDocuments = useCallback(async () => {
-    try {
+  // Fetch documents using TanStack Query
+  const { data: documents = [], isLoading } = useQuery<Document[]>({
+    queryKey: ["documents"],
+    queryFn: async () => {
       const res = await fetch("/api/documents");
-      if (res.ok) {
-        const contentType = res.headers.get("content-type");
-        if (contentType?.includes("application/json")) {
-          const data = await res.json();
-          setDocuments(data);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch documents:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      if (!res.ok) throw new Error("Failed to fetch documents");
+      return res.json();
+    },
+  });
 
-  useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete document");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+  });
 
   // Handle file upload
   const handleUpload = async () => {
@@ -86,18 +81,13 @@ export default function DocumentsPage() {
         body: formData,
       });
 
-      const contentType = res.headers.get("content-type");
       if (res.ok) {
         setSelectedFile(null);
         setDialogOpen(false);
-        fetchDocuments();
-      } else if (contentType?.includes("application/json")) {
+        queryClient.invalidateQueries({ queryKey: ["documents"] });
+      } else {
         const data = await res.json();
         alert(data.error || "Upload failed");
-      } else {
-        const text = await res.text();
-        console.error("Server returned HTML:", res.status, text.substring(0, 200));
-        alert(`Upload failed (${res.status}). Check console for details.`);
       }
     } catch (error) {
       console.error("Upload error:", error);
@@ -110,15 +100,7 @@ export default function DocumentsPage() {
   // Handle delete
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this document?")) return;
-
-    try {
-      const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        fetchDocuments();
-      }
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
+    deleteMutation.mutate(id);
   };
 
   // Drag & Drop handlers
@@ -153,7 +135,7 @@ export default function DocumentsPage() {
   );
 
   // Format date
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | Date) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -291,7 +273,11 @@ export default function DocumentsPage() {
               </TableRow>
             ) : (
               filteredDocs.map((doc) => (
-                <TableRow key={doc.id}>
+                <TableRow 
+                  key={doc.id} 
+                  className="cursor-pointer select-none"
+                  onDoubleClick={() => router.push(`/dashboard/documents/${doc.id}`)}
+                >
                   <TableCell className="font-medium flex items-center gap-2">
                     <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
                       <Files className="h-4 w-4 text-primary" />

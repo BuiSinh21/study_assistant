@@ -64,8 +64,6 @@ export async function POST(req: NextRequest) {
     const uniqueName = `${session.user.id}/${Date.now()}-${file.name}`
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    console.log(11111);
-
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(uniqueName, buffer, {
