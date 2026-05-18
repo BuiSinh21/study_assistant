@@ -19,6 +19,16 @@ export async function GET(
 
     const document = await prisma.document.findUnique({
       where: { id },
+      include: {
+        conversations: {
+          where: { userId: session.user.id },
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' }
+            }
+          }
+        }
+      }
     })
 
     if (!document) {

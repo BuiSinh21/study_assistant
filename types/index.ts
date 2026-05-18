@@ -7,6 +7,8 @@ export interface Document {
   fileType: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
+  summary: string | null;
+  conversations?: Conversation[];
 }
 
 export interface DocumentChunk {
@@ -20,6 +22,7 @@ export interface Conversation {
   userId: string;
   documentId: string;
   createdAt: string | Date;
+  messages?: Message[];
 }
 
 export interface Message {

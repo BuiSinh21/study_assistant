@@ -27,6 +27,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -39,7 +40,6 @@ export async function POST(req: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
-
     const allowedTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
